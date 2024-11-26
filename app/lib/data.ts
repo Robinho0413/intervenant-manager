@@ -1,17 +1,76 @@
-'use server';
-import { db } from "./db";
-import { Intervenant } from "./definitions/intervenant";
+"use server";
+
+import { db } from '@/app/lib/db';
+import { Intervenant } from './definitions/intervenant';
+
+const ITEMS_PER_PAGE = 5;
 
 export async function fetchIntervenants(): Promise<Intervenant[]> {
-    try {
-        console.log("Fetching intervenants");
-        const client = await db.connect();
-        console.log("Connection to the database");
-        const result = await client.query('SELECT * FROM "intervenants"');
-        client.release();
-        return result.rows as Intervenant[];
-    } catch (e : any) {
-        console.error("Error de recuperation des intervenants", e);
-        throw e;
-    }
+  try {
+    const client = await db.connect();
+    const result = await client.query(`
+      SELECT intervenants.id,
+        intervenants.email,
+        intervenants.firstname,
+        intervenants.lastname,
+        intervenants.key,
+        intervenants.creationdate,
+        intervenants.enddate,
+        intervenants.availability 
+      FROM intervenants`);
+    client.release();
+    return result.rows as Intervenant[];
+  } catch (error) {
+    throw new Error(`Failed to fetch intervenants: ${error}`);
+  }
+}
+
+export async function fetchIntervenantsPages(query: string): Promise<number> {
+  try {
+    const client = await db.connect();
+    const result = await client.query('SELECT COUNT(*) FROM "intervenants"');
+    client.release();
+    return Math.ceil(Number(result.rows[0].count) / ITEMS_PER_PAGE);
+  } catch (error) {
+    throw new Error(`Failed to fetch intervenants pages: ${error}`);
+  }
+}
+
+export async function fetchFilteredIntervenants(
+  query: string,
+  currentPage: number,
+) {
+  const offset = (currentPage - 1) * ITEMS_PER_PAGE;
+
+  try {
+    const client = await db.connect();
+    const queryText = `
+      SELECT
+        intervenants.id,
+        intervenants.email,
+        intervenants.firstname,
+        intervenants.lastname,
+        intervenants.key,
+        intervenants.creationdate,
+        intervenants.enddate,
+        intervenants.availability
+      FROM intervenants
+      WHERE
+        intervenants.firstname ILIKE $1 OR
+        intervenants.lastname ILIKE $1 OR
+        intervenants.email ILIKE $1 OR
+        intervenants.key ILIKE $1
+      ORDER BY intervenants.firstname ASC
+      LIMIT $2 OFFSET $3
+    `;
+    const queryValues = [`%${query}%`, ITEMS_PER_PAGE, offset];
+    const result = await client.query(queryText, queryValues);
+
+    client.release();
+    return result.rows as Intervenant[];
+
+  } catch (error) {
+    console.error('Database Error:', error);
+    throw new Error('Failed to fetch intervenants.');
+  }
 }

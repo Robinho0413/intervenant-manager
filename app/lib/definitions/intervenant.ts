@@ -1,6 +1,10 @@
 export type Intervenant = {
-    id: number;
+    id: string;
     email: string;
-    fisrtname: string;
+    firstname: string;
     lastname: string;
-}
+    key: string;
+    creationdate: string;
+    enddate: string;
+    availability: JSON;
+};
