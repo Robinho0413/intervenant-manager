@@ -3,7 +3,7 @@ import { DeleteIntervenant } from './buttons';
 import { formatDateToLocal } from '@/app/lib/utils';
 import { fetchFilteredIntervenants } from '@/app/lib/data';
 
-export default async function InvoicesTable({
+export default async function IntervenantsTable({
   query,
   currentPage,
 }: {

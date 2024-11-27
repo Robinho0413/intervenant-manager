@@ -1,8 +1,7 @@
-
-
-import Pagination from '@/app/ui/interverners/pagination';
-import Table from '@/app/ui/interverners/table';
+import Pagination from '@/app/ui/interveners/pagination';
+import Table from '@/app/ui/interveners/table';
 import { fetchIntervenantsPages, fetchIntervenants } from '@/app/lib/data';
+import { CreateIntervenant } from '@/app/ui/interveners/buttons';
 
 export default async function IntervenerPage({
   searchParams,
@@ -25,7 +24,7 @@ export default async function IntervenerPage({
       </div>
       <div className="mt-4 flex items-center justify-between gap-2 md:mt-8">
         {/* <Search placeholder="Rechercher un intervenant..." /> */}
-        {/* <CreateInvoice /> */}
+        <CreateIntervenant />
       </div>
       <Table query={query} currentPage={currentPage} />
       <div className="mt-5 flex w-full justify-center">
