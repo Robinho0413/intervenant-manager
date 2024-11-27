@@ -1,5 +1,5 @@
 
-// import { UpdateInvoice, DeleteInvoice } from '@/app/ui/invoices/buttons';
+import { DeleteIntervenant } from './buttons';
 import { formatDateToLocal } from '@/app/lib/utils';
 import { fetchFilteredIntervenants } from '@/app/lib/data';
 
@@ -11,6 +11,11 @@ export default async function InvoicesTable({
   currentPage: number;
 }) {
   const intervenants = await fetchFilteredIntervenants(query, currentPage);
+
+  const isExpired = (endDate: string | number | Date) => {
+    const today = new Date();
+    return new Date(endDate) < today;
+  };
 
   return (
     <div className="mt-6 flow-root">
@@ -35,8 +40,8 @@ export default async function InvoicesTable({
                     <p>{formatDateToLocal(intervenant.creationdate)}</p>
                   </div>
                   <div className="flex justify-end gap-2">
-                    {/* <UpdateInvoice id={invoice.id} />
-                    <DeleteInvoice id={invoice.id} /> */}
+                    {/* <UpdateInvoice id={invoice.id} /> */}
+                    <DeleteIntervenant id={intervenant.id} />
                   </div>
                 </div>
               </div>
@@ -78,21 +83,23 @@ export default async function InvoicesTable({
               {intervenants?.map((intervenant) => (
                 <tr
                   key={intervenant.id}
-                  className="w-full border-b py-3 text-sm last-of-type:border-none [&:first-child>td:first-child]:rounded-tl-lg [&:first-child>td:last-child]:rounded-tr-lg [&:last-child>td:first-child]:rounded-bl-lg [&:last-child>td:last-child]:rounded-br-lg"
-                >
+                  className={`w-full border-b py-3 text-sm last-of-type:border-none [&:first-child>td:first-child]:rounded-tl-lg [&:first-child>td:last-child]:rounded-tr-lg [&:last-child>td:first-child]:rounded-bl-lg [&:last-child>td:last-child]:rounded-br-lg ${
+                    isExpired(intervenant.enddate) ? 'bg-red-100' : ''
+                  }`}
+                  >
                   <td className="whitespace-nowrap py-3 pl-6 pr-3">
                     <div className="flex items-center gap-3">
                       <p>{intervenant.id}</p>
                     </div>
                   </td>
                   <td className="whitespace-nowrap px-3 py-3">
+                    {intervenant.email}
+                  </td>
+                  <td className="whitespace-nowrap px-3 py-3">
                     {intervenant.firstname}
                   </td>
                   <td className="whitespace-nowrap px-3 py-3">
                     {intervenant.lastname}
-                  </td>
-                  <td className="whitespace-nowrap px-3 py-3">
-                    {intervenant.email}
                   </td>
                   <td className="whitespace-nowrap px-3 py-3">
                     {intervenant.key}
@@ -110,8 +117,8 @@ export default async function InvoicesTable({
                   </td>
                   <td className="whitespace-nowrap py-3 pl-6 pr-3">
                     <div className="flex justify-end gap-3">
-                      {/* <UpdateInvoice id={invoice.id} />
-                      <DeleteInvoice id={invoice.id} /> */}
+                      {/* <UpdateInvoice id={invoice.id} /> */}
+                      <DeleteIntervenant id={intervenant.id} />
                     </div>
                   </td>
                 </tr>
