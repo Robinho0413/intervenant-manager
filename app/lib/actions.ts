@@ -4,67 +4,94 @@ import { db } from './db';
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
+import { inter } from '../ui/fonts';
+import { v4 as uuidv4 } from 'uuid';
  
 const FormSchema = z.object({
   id: z.string(),
-  customerId: z.string({
-    invalid_type_error: 'Please select a customer.',
-  }),
-  amount: z.coerce.number().gt(0, { message: 'Please enter an amount greater than $0.' }),
-  status: z.enum(['pending', 'paid'], {
-    invalid_type_error: 'Please select an invoice status.',
-  }),
-  date: z.string(),
+  email: z.string().email('Email invalide'),
+  firstname: z.string(),
+  lastname: z.string(),
 });
 
 export type State = {
   errors?: {
-    customerId?: string[];
-    amount?: string[];
-    status?: string[];
+    email?: string[];
+    firstname?: string[];
+    lastname?: string[];
+    enddate?: string[];
   };
   message?: string | null;
 };
  
-const CreateInvoice = FormSchema.omit({ id: true, date: true });
+const CreateIntervenant = FormSchema.omit({ id: true });
 
-export async function createInvoice(prevState: State, formData: FormData) {
+export async function createIntervenant(prevState: State, formData: FormData) {
   // Validate form using Zod
-  const validatedFields = CreateInvoice.safeParse({
-    customerId: formData.get('customerId'),
-    amount: formData.get('amount'),
-    status: formData.get('status'),
+  const validatedFields = CreateIntervenant.safeParse({
+    email: formData.get('email'),
+    firstname: formData.get('firstname'),
+    lastname: formData.get('lastname'),
   });
  
   // If form validation fails, return errors early. Otherwise, continue.
   if (!validatedFields.success) {
     return {
       errors: validatedFields.error.flatten().fieldErrors,
-      message: 'Missing Fields. Failed to Create Invoice.',
+      message: 'Champs manquants Création de l\'intervenant échouée.',
     };
   }
  
   // Prepare data for insertion into the database
-  const { customerId, amount, status } = validatedFields.data;
-  const amountInCents = amount * 100;
-  const date = new Date().toISOString().split('T')[0];
- 
-  // Insert data into the database
+  const { email, firstname, lastname } = validatedFields.data;
+
+  // Vérifier si l'email existe déjà dans la base de données
   try {
-    await sql`
-      INSERT INTO invoices (customer_id, amount, status, date)
-      VALUES (${customerId}, ${amountInCents}, ${status}, ${date})
-    `;
+    const client = await db.connect();
+    const emailCheckResult = await client.query(
+      'SELECT COUNT(*) FROM intervenants WHERE email = $1',
+      [email]
+    );
+    client.release();
+
+    const emailExists = parseInt(emailCheckResult.rows[0].count, 10) > 0;
+
+    if (emailExists) {
+      // Retourner un message d'erreur si l'email existe déjà
+      return {
+        errors: { email: ['Cet email est déjà utilisé.'] },
+        message: 'Email déjà utilisé.',
+      };
+    }
+
+    // Si l'email n'existe pas, continuer avec l'insertion dans la base de données
+    const key = uuidv4();
+    const creationdate = new Date().toISOString();
+    const enddate = new Date();
+    enddate.setMonth(enddate.getMonth() + 2);
+
+    const clientInsert = await db.connect();
+    await clientInsert.query(`
+      INSERT INTO intervenants(
+        email,
+        firstname,
+        lastname,
+        key,
+        creationdate,
+        enddate,
+        availability
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, '{}')`, [email, firstname, lastname, key, creationdate, enddate.toISOString()]);
+    clientInsert.release();
+
+    revalidatePath('/dashboard/interveners');
+    redirect('/dashboard/interveners');
+
   } catch (error) {
-    // If a database error occurs, return a more specific error.
     return {
-      message: 'Database Error: Failed to Create Invoice.',
+      message: 'Erreur base de données : Échec de la création de l\'intervenant : ' + error,
     };
   }
- 
-  // Revalidate the cache for the invoices page and redirect the user.
-  revalidatePath('/dashboard/invoices');
-  redirect('/dashboard/invoices');
 }
 
 const UpdateInvoice = FormSchema.omit({ id: true, date: true });
@@ -116,3 +143,4 @@ export async function deleteIntervenant(id: string) {
       return { message: 'Database Error: Failed to Delete intervenant.' };
     }
 }
+
