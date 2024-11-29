@@ -18,6 +18,10 @@ export const formatCurrency = (amount: number) => {
     const formatter = new Intl.DateTimeFormat(locale, options);
     return formatter.format(date);
   };
+
+  export const formatDateToNumber = (dateStr: string) => {
+    return new Date(dateStr).toISOString().split('T')[0];
+  };
   
   export const generatePagination = (currentPage: number, totalPages: number) => {
     // If the total number of pages is 7 or less,

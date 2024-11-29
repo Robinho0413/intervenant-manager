@@ -6,12 +6,20 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { inter } from '../ui/fonts';
 import { v4 as uuidv4 } from 'uuid';
- 
+
 const FormSchema = z.object({
   id: z.string(),
   email: z.string().email('Email invalide'),
   firstname: z.string(),
   lastname: z.string(),
+});
+
+const EditFormSchema = z.object({
+  id: z.string(),
+  email: z.string().email('Email invalide'),
+  firstname: z.string(),
+  lastname: z.string(),
+  enddate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date invalide')
 });
 
 export type State = {
@@ -23,7 +31,7 @@ export type State = {
   };
   message?: string | null;
 };
- 
+
 const CreateIntervenant = FormSchema.omit({ id: true });
 
 export async function createIntervenant(prevState: State, formData: FormData) {
@@ -33,7 +41,7 @@ export async function createIntervenant(prevState: State, formData: FormData) {
     firstname: formData.get('firstname'),
     lastname: formData.get('lastname'),
   });
- 
+
   // If form validation fails, return errors early. Otherwise, continue.
   if (!validatedFields.success) {
     return {
@@ -41,7 +49,7 @@ export async function createIntervenant(prevState: State, formData: FormData) {
       message: 'Champs manquants Création de l\'intervenant échouée.',
     };
   }
- 
+
   // Prepare data for insertion into the database
   const { email, firstname, lastname } = validatedFields.data;
 
@@ -94,53 +102,57 @@ export async function createIntervenant(prevState: State, formData: FormData) {
   }
 }
 
-const UpdateInvoice = FormSchema.omit({ id: true, date: true });
+const UpdateIntervenant = EditFormSchema.omit({ id: true });
 
-export async function updateInvoice(
+export async function updateIntervenant(
   id: string,
   prevState: State,
   formData: FormData,
 ) {
-  const validatedFields = UpdateInvoice.safeParse({
-    customerId: formData.get('customerId'),
-    amount: formData.get('amount'),
-    status: formData.get('status'),
+  const validatedFields = UpdateIntervenant.safeParse({
+    email: formData.get('email'),
+    firstname: formData.get('firstname'),
+    lastname: formData.get('lastname'),
+    enddate: formData.get('enddate'),
   });
- 
+
   if (!validatedFields.success) {
     return {
       errors: validatedFields.error.flatten().fieldErrors,
-      message: 'Missing Fields. Failed to Update Invoice.',
+      message: 'Champs manquants. Modification impossible.',
     };
   }
- 
-  const { customerId, amount, status } = validatedFields.data;
-  const amountInCents = amount * 100;
- 
+
+  const { email, firstname, lastname, enddate } = validatedFields.data;
+
   try {
-    await sql`
-      UPDATE invoices
-      SET customer_id = ${customerId}, amount = ${amountInCents}, status = ${status}
-      WHERE id = ${id}
-    `;
+    const client = await db.connect();
+    const result = await client.query(`
+      UPDATE intervenants
+      SET email = $1, firstname = $2, lastname = $3, enddate = $4
+      WHERE id = $5
+    `, [email, firstname, lastname, enddate, id]);
+    client.release();
   } catch (error) {
-    return { message: 'Database Error: Failed to Update Invoice.' };
+    return {
+      message: 'Database Error: Failed to Update Intervenants: ' + error,
+    };
   }
- 
-  revalidatePath('/dashboard/invoices');
-  redirect('/dashboard/invoices');
+
+  revalidatePath('/dashboard/interveners');
+  redirect('/dashboard/interveners');
 }
 
 
 export async function deleteIntervenant(id: string) {
-    try {
+  try {
     const client = await db.connect();
     const result = await client.query(`DELETE FROM intervenants WHERE id = ${id}`)
     client.release();
     revalidatePath('/dashboard/interveners');
-    return { message: 'Deleted intervenant.' };
-    } catch (error) {
-      return { message: 'Database Error: Failed to Delete intervenant.' };
-    }
+    return { message: 'Deleted intervenants.' };
+  } catch (error) {
+    return { message: 'Database Error: Failed to Delete intervenants.' };
+  }
 }
 
