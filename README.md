@@ -1,5 +1,5 @@
 # Intervenant Manager
 
-## Fonctionnalités
+## Progression
 
-Itération 6
+Itération 7 (29/11)
