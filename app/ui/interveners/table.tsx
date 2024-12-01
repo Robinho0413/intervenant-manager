@@ -1,5 +1,5 @@
 
-import { DeleteIntervenant, UpdateIntervenant } from './buttons';
+import { DeleteIntervenant, RegenerateKeyIntervenant, UpdateIntervenant } from './buttons';
 import { formatDateToLocal } from '@/app/lib/utils';
 import { fetchFilteredIntervenants } from '@/app/lib/data';
 
@@ -40,6 +40,7 @@ export default async function IntervenantsTable({
                     <p>{formatDateToLocal(intervenant.creationdate)}</p>
                   </div>
                   <div className="flex justify-end gap-2">
+                    <RegenerateKeyIntervenant id={intervenant.id} />
                     <UpdateIntervenant id={intervenant.id} />
                     <DeleteIntervenant id={intervenant.id} />
                   </div>
@@ -117,6 +118,7 @@ export default async function IntervenantsTable({
                   </td>
                   <td className="whitespace-nowrap py-3 pl-6 pr-3">
                     <div className="flex justify-end gap-3">
+                      <RegenerateKeyIntervenant id={intervenant.id} />
                       <UpdateIntervenant id={intervenant.id} />
                       <DeleteIntervenant id={intervenant.id} />
                     </div>

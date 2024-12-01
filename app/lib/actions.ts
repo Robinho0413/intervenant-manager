@@ -156,3 +156,47 @@ export async function deleteIntervenant(id: string) {
   }
 }
 
+export async function regenerateKeyIntervenant(id: string) {
+  try {
+    const newKey = uuidv4();
+    const creationdate = new Date().toISOString();
+    const enddate = new Date();
+    enddate.setMonth(enddate.getMonth() + 2);
+
+    const client = await db.connect();
+    await client.query(
+      `UPDATE intervenants SET key = $1, creationdate = $2, enddate = $3 WHERE id = $4`,
+      [newKey, creationdate, enddate.toISOString(), id]
+    );
+    client.release();
+    revalidatePath('/dashboard/interveners');
+    return { message: 'Clé régénérée avec succès.' };
+  } catch (error) {
+    return { message: 'Erreur base de données : Échec de la régénération de la clé : ' + error };
+  }
+}
+
+export async function regenerateAllKeysIntervenant() {
+  try {
+    const client = await db.connect();
+    const intervenants = await client.query('SELECT id FROM intervenants');
+    
+    for (const intervenant of intervenants.rows) {
+      const newKey = uuidv4();
+      const creationdate = new Date().toISOString();
+      const enddate = new Date();
+      enddate.setMonth(enddate.getMonth() + 2);
+
+      await client.query(
+        `UPDATE intervenants SET key = $1, creationdate = $2, enddate = $3 WHERE id = $4`,
+        [newKey, creationdate, enddate.toISOString(), intervenant.id]
+      );
+    }
+
+    client.release();
+    revalidatePath('/dashboard/interveners');
+    return { message: 'Toutes les clés ont été régénérées avec succès.' };
+  } catch (error) {
+    return { message: 'Erreur base de données : Échec de la régénération des clés : ' + error };
+  }
+}
