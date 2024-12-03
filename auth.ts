@@ -4,14 +4,21 @@ import { authConfig } from './auth.config';
 import { z } from 'zod';
 import type { User } from '@/app/lib/definitions/user';
 import bcrypt from 'bcrypt';
+import { db } from './app/lib/db';
  
 async function getUser(email: string): Promise<User | undefined> {
   try {
-    const user = await sql<User>`SELECT * FROM users WHERE email=${email}`;
-    return user.rows[0];
+    const client = await db.connect();
+    const result = await client.query(`
+      SELECT u.id,
+        u.email,
+        u.password
+      FROM "Users" u
+      WHERE u.email = $1`, [email]);
+    return result.rows[0];
   } catch (error) {
-    console.error('Failed to fetch user:', error);
-    throw new Error('Failed to fetch user.');
+    console.error('Failed to fetch users:', error);
+    throw new Error('Failed to fetch users.');
   }
 }
  

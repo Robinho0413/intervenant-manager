@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
+    "@mapbox/node-pre-gyp": "^1.0.11",
     "@types/bcrypt": "^5.0.2",
     "bcrypt": "^5.1.1",
     "clsx": "^2.1.1",
@@ -30,6 +31,7 @@
     "@types/uuid": "^10.0.0",
     "eslint": "^8",
     "eslint-config-next": "15.0.3",
+    "html-loader": "^5.1.0",
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
     "typescript": "^5.7.2"
