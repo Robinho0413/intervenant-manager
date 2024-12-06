@@ -93,3 +93,29 @@ export async function fetchIntervenantById (id: string) {
     throw new Error(`Failed to fetch intervenants: ${error}`);
   }
 }
+
+export async function fetchIntervenantByKey(key: string): Promise<Intervenant | null> {
+  try {
+    const client = await db.connect();
+    const result = await client.query(`
+      SELECT intervenants.id,
+        intervenants.email,
+        intervenants.firstname,
+        intervenants.lastname,
+        intervenants.key,
+        intervenants.creationdate,
+        intervenants.enddate,
+        intervenants.availability
+      FROM intervenants
+      WHERE intervenants.key = $1`, [key]);
+    client.release();
+
+    if (result.rows.length === 0) {
+      return null;
+    }
+
+    return result.rows[0] as Intervenant;
+  } catch (error) {
+    throw new Error(`Failed to fetch intervenant by key: ${error}`);
+  }
+}
