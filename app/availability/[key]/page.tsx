@@ -7,13 +7,14 @@ import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 
 export default function Page({ params }: { params: { key: string } }) {
   // Déballer params avec React.use()
   const { key } = React.use(params); // Utilisation de React.use() pour déballer params
   const [intervenant, setIntervenant] = useState(null);
   const [loading, setLoading] = useState(true);
+  const calendarRef = useRef(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -68,11 +69,20 @@ export default function Page({ params }: { params: { key: string } }) {
     <div>
       <h1>Bonjour {intervenant.firstname} {intervenant.lastname}</h1>
       <FullCalendar
+        innerRef={calendarRef}
         plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-        initialView="dayGridMonth"
+        headerToolbar={{
+          left: 'prev,next today',
+          center: 'title',
+          right: 'dayGridMonth,timeGridWeek,timeGridDay'
+        }}
+        locale="fr"
+        initialView="dayGridWeek"
         events={events} // Remplacer par des événements réels
         editable={true}
         selectable={true}
+        weekNumbers={true}
+        weekends={false}
       />
     </div>
   );
