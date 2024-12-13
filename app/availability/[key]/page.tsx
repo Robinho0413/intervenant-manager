@@ -8,10 +8,72 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import { useEffect, useState, useRef } from 'react';
+import frLocale from '@fullcalendar/core/locales/fr'; // Import de la locale française
+
+function parseAvailabilityToEvents(availability, startDate) {
+  const events = [];
+  const baseDate = new Date(startDate); // Point de départ (exemple: début d'une année)
+
+  // Mapper les jours de la semaine en index
+  const dayMapping = {
+    lundi: 0,
+    mardi: 1,
+    mercredi: 2,
+    jeudi: 3,
+    vendredi: 4,
+    samedi: 5,
+    dimanche: 6,
+  };
+
+  // Parcourir chaque semaine et ses disponibilités
+  Object.entries(availability).forEach(([weekKey, schedules]) => {
+    const weekNumber = weekKey.startsWith('S') ? parseInt(weekKey.substring(1)) : null;
+
+    // Calculer la date du début de semaine
+    const weekStartDate = new Date(baseDate);
+    if (weekNumber) {
+      weekStartDate.setDate(weekStartDate.getDate() + (weekNumber - 1) * 7);
+    }
+
+    schedules.forEach((schedule) => {
+      const { days, from, to } = schedule;
+      const dayList = days.split(',').map((d) => d.trim().toLowerCase());
+
+      dayList.forEach((day) => {
+        const dayOffset = dayMapping[day];
+        if (dayOffset !== undefined) {
+          const eventDate = new Date(weekStartDate);
+          eventDate.setDate(eventDate.getDate() + dayOffset);
+
+          // Générer les heures de début et de fin
+          const [fromHour, fromMinute] = from.split(':').map(Number);
+          const [toHour, toMinute] = to.split(':').map(Number);
+
+          const startDateTime = new Date(eventDate);
+          const endDateTime = new Date(eventDate);
+
+          startDateTime.setHours(fromHour, fromMinute, 0, 0);
+          endDateTime.setHours(toHour, toMinute, 0, 0);
+
+          // Ajouter l'événement
+          events.push({
+            title: `Disponibilité (${from} - ${to})`,
+            start: startDateTime.toISOString(),
+            end: endDateTime.toISOString(),
+          });
+        }
+      });
+    });
+  });
+
+  return events;
+}
+
+
+
 
 export default function Page({ params }: { params: { key: string } }) {
-  // Déballer params avec React.use()
-  const { key } = React.use(params); // Utilisation de React.use() pour déballer params
+  const { key } = React.use(params);
   const [intervenant, setIntervenant] = useState(null);
   const [loading, setLoading] = useState(true);
   const calendarRef = useRef(null);
@@ -26,26 +88,29 @@ export default function Page({ params }: { params: { key: string } }) {
       try {
         setLoading(true); // Démarrer le chargement
         const intervenantData = await fetchIntervenantByKey(key);
+        console.log(intervenantData);
 
         if (!intervenantData) {
           notFound();
         } else if (new Date(intervenantData.enddate) < new Date()) {
           setIntervenant(null); // L'événement est expiré
         } else {
-          setIntervenant(intervenantData); // Mettre à jour les données de l'intervenant
+          const startDate = '2024-01-01'; // Définir une date de référence
+          const events = parseAvailabilityToEvents(intervenantData.availability, startDate);
+          setIntervenant({ ...intervenantData, events });
         }
       } catch (error) {
-        console.error(error); // Afficher l'erreur
-        notFound(); // Si une erreur se produit, afficher la page 404
+        console.error(error);
+        notFound();
       } finally {
-        setLoading(false); // Assurez-vous de mettre à jour l'état de chargement
+        setLoading(false);
       }
     };
 
     if (key) {
       fetchData(); // Exécuter l'appel de données si `key` est définie
     }
-  }, [key]); // Réexécuter le hook lorsque `key` change
+  }, [key]);
 
   if (loading) {
     return <div>Loading...</div>;
@@ -59,12 +124,6 @@ export default function Page({ params }: { params: { key: string } }) {
     );
   }
 
-  // Exemple de données d'événements (remplacer par des données réelles)
-  const events = [
-    { title: 'Événement 1', start: '2024-12-15', end: '2024-12-16' },
-    { title: 'Événement 2', start: '2024-12-20' },
-  ];
-
   return (
     <div>
       <h1>Bonjour {intervenant.firstname} {intervenant.lastname}</h1>
@@ -77,8 +136,9 @@ export default function Page({ params }: { params: { key: string } }) {
           right: 'dayGridMonth,timeGridWeek,timeGridDay'
         }}
         locale="fr"
-        initialView="dayGridWeek"
-        events={events} // Remplacer par des événements réels
+        locales={[frLocale]}
+        initialView="timeGridWeek"
+        events={intervenant?.events || []}
         editable={true}
         selectable={true}
         weekNumbers={true}
