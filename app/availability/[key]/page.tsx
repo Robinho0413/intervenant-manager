@@ -12,7 +12,7 @@ import frLocale from '@fullcalendar/core/locales/fr'; // Import de la locale fra
 
 function parseAvailabilityToEvents(availability, startDate) {
   const events = [];
-  const baseDate = new Date(startDate); // Point de départ (exemple: début d'une année)
+  const baseDate = new Date(startDate);
 
   // Mapper les jours de la semaine en index
   const dayMapping = {
@@ -25,16 +25,39 @@ function parseAvailabilityToEvents(availability, startDate) {
     dimanche: 6,
   };
 
-  // Parcourir chaque semaine et ses disponibilités
-  Object.entries(availability).forEach(([weekKey, schedules]) => {
-    const weekNumber = weekKey.startsWith('S') ? parseInt(weekKey.substring(1)) : null;
+  // Fonction pour ajuster l'année en fonction du mois
+  const adjustYear = (date) => {
+    const month = date.getMonth();
+    return month >= 0 && month <= 7 ? 2025 : 2024;
+  };
 
-    // Calculer la date du début de semaine
-    const weekStartDate = new Date(baseDate);
-    if (weekNumber) {
-      weekStartDate.setDate(weekStartDate.getDate() + (weekNumber - 1) * 7);
+  function adjustWeekStartDateFor2025(date) {
+    if (date.getFullYear() === 2025) {
+      const adjustedDate = new Date(date);
+      adjustedDate.setDate(date.getDate() - 2); // Ajuster pour que l'année 2025 commence le lundi 30 décembre 2024
+      return adjustedDate;
     }
+    return date;
+  }
 
+  // Extraire les disponibilités par défaut
+  const defaultSchedules = availability.default || [];
+
+  // Identifier les semaines spécifiées
+  const specifiedWeeks = Object.keys(availability)
+    .filter((key) => key.startsWith('S'))
+    .map((key) => parseInt(key.substring(1)));
+
+  // Parcourir chaque semaine de l'année
+  for (let week = 1; week <= 52; week++) {
+    const weekKey = `S${week}`;
+    const schedules = availability[weekKey] || defaultSchedules;
+
+    // Calculer la date de début de la semaine
+    const weekStartDate = new Date(baseDate);
+    weekStartDate.setDate(baseDate.getDate() + (week - 1) * 7);
+
+    // Appliquer les disponibilités
     schedules.forEach((schedule) => {
       const { days, from, to } = schedule;
       const dayList = days.split(',').map((d) => d.trim().toLowerCase());
@@ -42,8 +65,13 @@ function parseAvailabilityToEvents(availability, startDate) {
       dayList.forEach((day) => {
         const dayOffset = dayMapping[day];
         if (dayOffset !== undefined) {
-          const eventDate = new Date(weekStartDate);
+          let eventDate = new Date(weekStartDate);
+          eventDate = adjustWeekStartDateFor2025(eventDate);
           eventDate.setDate(eventDate.getDate() + dayOffset);
+
+          // Ajuster l'année selon le mois
+          const adjustedYear = adjustYear(eventDate);
+          eventDate.setFullYear(adjustedYear);
 
           // Générer les heures de début et de fin
           const [fromHour, fromMinute] = from.split(':').map(Number);
@@ -64,12 +92,10 @@ function parseAvailabilityToEvents(availability, startDate) {
         }
       });
     });
-  });
+  }
 
   return events;
 }
-
-
 
 
 export default function Page({ params }: { params: { key: string } }) {
