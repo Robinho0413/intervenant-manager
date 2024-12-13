@@ -2,4 +2,4 @@
 
 ## Progression
 
-Itération 8 (01/12)
+Itération 12 (13/12)
