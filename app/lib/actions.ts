@@ -221,3 +221,24 @@ export async function authenticate(
     throw error;
   }
 }
+
+export async function saveAvailability(id: string, updatedAvailability: any) {
+  try {
+    const client = await db.connect();
+    
+    const query = `
+      UPDATE public.intervenants
+      SET availability = $1
+      WHERE id = $2;
+    `;
+    
+    // Utiliser le format JSON pour insérer les nouvelles disponibilités
+    await client.query(query, [JSON.stringify(updatedAvailability), id]);
+
+    client.release();
+    return { message: 'Disponibilité enregistrée avec succès.' };
+  } catch (error) {
+    console.error("Erreur dans la base de données : ", error);
+    return { message: 'Erreur base de données : Échec de l\'enregistrement de la disponibilité.' };
+  }
+}
