@@ -7,13 +7,15 @@ import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import frLocale from "@fullcalendar/core/locales/fr";
+import { saveAvailability } from "@/app/lib/actions";
+import { SelectInfo, Availability, WeekNumberFunction } from "@/app/lib/definitions/availability";
 
-function parseAvailabilityToEvents(availability, startDate, endDate) {
-  const events = [];
+function parseAvailabilityToEvents(availability: Record<string, Availability[]>, startDate: Date, endDate: Date) {
+  const events: { title: string; start: string; end: string; }[] = [];
   const baseDate = new Date(startDate);
   const endPeriod = new Date(endDate);
 
-  const dayMapping = {
+  const dayMapping: Record<string, number> = {
     lundi: 0,
     mardi: 1,
     mercredi: 2,
@@ -81,18 +83,19 @@ function parseAvailabilityToEvents(availability, startDate, endDate) {
 
 
 // Fonction pour obtenir le numéro de semaine
-function getWeekNumber(date) {
+const getWeekNumber: WeekNumberFunction = (date) => {
   const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
   const dayNum = d.getUTCDay() || 7;
   d.setUTCDate(d.getUTCDate() + 4 - dayNum);
   const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-  return Math.ceil(((d - yearStart) / 86400000 + 1) / 7);
-}
+  return Math.ceil(((Number(d) - Number(yearStart)) / 86400000 + 1) / 7);
+};
 
 export default function Page({ params }: { params: { key: string } }) {
   const { key } = React.use(params);
   const [intervenant, setIntervenant] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [events, setEvents] = useState([]);
   const calendarRef = useRef(null);
 
   useEffect(() => {
@@ -105,7 +108,6 @@ export default function Page({ params }: { params: { key: string } }) {
       try {
         setLoading(true);
         const intervenantData = await fetchIntervenantByKey(key);
-        console.log(intervenantData);
 
         if (!intervenantData) {
           notFound();
@@ -115,11 +117,12 @@ export default function Page({ params }: { params: { key: string } }) {
           const endDate = new Date(new Date().getFullYear() + 1, 5, 30); // 30 Juin prochain
 
           const events = parseAvailabilityToEvents(
-            intervenantData.availability,
+            intervenantData.availability as unknown as Record<string, Availability[]>,
             startDate,
             endDate
           );
           setIntervenant({ ...intervenantData, events });
+          setEvents(events);
         }
       } catch (error) {
         console.error(error);
@@ -146,6 +149,59 @@ export default function Page({ params }: { params: { key: string } }) {
     );
   }
 
+  const handleSelect = async (selectInfo: SelectInfo) => {
+    const { start, end } = selectInfo;
+    const intervenantId: string = intervenant.id;
+
+    // Ajuster les heures pour correspondre à l'heure locale
+    const adjustedStart = new Date(start);
+    const adjustedEnd = new Date(end);
+
+    // Convertir en heure locale (format HH:mm)
+    const from: string = adjustedStart.toTimeString().slice(0, 5); // Format HH:mm
+    const to: string = adjustedEnd.toTimeString().slice(0, 5);
+
+    // Créer une nouvelle disponibilité
+    const newAvailability: Availability = {
+      days: adjustedStart.toLocaleDateString("fr-FR", { weekday: "long" }).toLowerCase(),
+      from,
+      to,
+    };
+
+    // Charger les disponibilités existantes de l'intervenant
+    const currentAvailability: Record<string, Availability[]> = intervenant.availability || {};
+
+    // Vérifier si cette disponibilité existe déjà et ajouter/modifier la plage
+    const weekNumber: number = getWeekNumber(new Date(start)); // Calculer le numéro de la semaine
+
+    const availabilityForWeek: Availability[] = currentAvailability[`S${weekNumber}`] || [];
+    availabilityForWeek.push(newAvailability);
+
+    // Mettre à jour les disponibilités dans l'objet
+    const updatedAvailability: Record<string, Availability[]> = {
+      ...currentAvailability,
+      [`S${weekNumber}`]: availabilityForWeek,
+    };
+
+    try {
+      // Sauvegarder les disponibilités mises à jour dans la base de données
+      const response = await saveAvailability(intervenantId, updatedAvailability);
+      console.log(response.message);
+
+      // Mettre à jour l'état des événements
+      const newEvent = {
+        title: `Disponibilité (${from} - ${to})`,
+        start: start.toISOString(),
+        end: end.toISOString(),
+      };
+      setEvents([...events, newEvent]);
+    } catch (error) {
+      console.error("Erreur lors de l'enregistrement de la disponibilité :", error);
+    }
+    selectInfo.view.calendar.unselect();
+  };
+
+
   return (
     <div>
       <h1>
@@ -162,11 +218,12 @@ export default function Page({ params }: { params: { key: string } }) {
         locale="fr"
         locales={[frLocale]}
         initialView="timeGridWeek"
-        events={intervenant?.events || []}
+        events={events}
         editable={true}
         selectable={true}
         weekNumbers={true}
         weekends={false}
+        select={handleSelect}
       />
     </div>
   );
