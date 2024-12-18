@@ -33,8 +33,7 @@ function parseAvailabilityToEvents(availability, startDate, endDate) {
 
     // Filtrer la semaine 52 de 2024 et la semaine 1 de 2025
     if (
-      (weekNumber === 52 && currentYear === 2024) ||
-      (weekNumber === 1 && currentYear === 2025)
+      (weekNumber === 52 && currentYear === 2024)
     ) {
       currentWeekStart.setDate(currentWeekStart.getDate() + 14);
       continue; // Passer à la semaine suivante
