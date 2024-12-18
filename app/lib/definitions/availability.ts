@@ -17,3 +17,14 @@ export interface Availability {
 export interface WeekNumberFunction {
     (date: Date): number;
 }
+
+export interface CalendarProps {
+    intervenant: {
+        id: string;
+        firstname: string;
+        lastname: string;
+        availability: Record<string, Availability[]>;
+    };
+    startDate: Date;
+    endDate: Date;
+}
