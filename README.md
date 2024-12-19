@@ -2,11 +2,11 @@
 
 ## Lancer l'environnement
 
-# Production :
+### Production :
 ```
 docker-compose --profile production up --build
 ```
-# Dev :
+### Dev :
 ```
 docker-compose --profile development up
 ```
