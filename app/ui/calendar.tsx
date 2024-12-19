@@ -31,8 +31,14 @@ const Calendar: React.FC<CalendarProps> = ({ intervenant, startDate, endDate }: 
         const adjustedStart = new Date(start);
         const adjustedEnd = new Date(end);
 
-        const from = adjustedStart.toTimeString().slice(0, 5);
-        const to = adjustedEnd.toTimeString().slice(0, 5);
+        const formatTime = (date: Date) => {
+            const hours = date.getHours();
+            const minutes = date.getMinutes();
+            return `${hours}:${minutes < 10 ? '0' : ''}${minutes}`;
+        };
+
+        const from = formatTime(adjustedStart);
+        const to = formatTime(adjustedEnd);
 
         const newAvailability: Availability = {
             days: adjustedStart.toLocaleDateString("fr-FR", { weekday: "long" }).toLowerCase(),
@@ -67,9 +73,15 @@ const Calendar: React.FC<CalendarProps> = ({ intervenant, startDate, endDate }: 
         const adjustedStart = new Date(event.start);
         const adjustedEnd = new Date(event.end);
 
-        const from = adjustedStart.toTimeString().slice(0, 5);
-        const to = adjustedEnd.toTimeString().slice(0, 5);
-        const days = adjustedStart.toLocaleDateString("fr-FR", { weekday: "long" }).toLowerCase();
+        const formatTime = (date: Date) => {
+            const hours = date.getHours();
+            const minutes = date.getMinutes();
+            return `${hours}:${minutes < 10 ? '0' : ''}${minutes}`;
+        };
+
+        const from = formatTime(adjustedStart);
+        const to = formatTime(adjustedEnd);
+        const dayToDelete = adjustedStart.toLocaleDateString("fr-FR", { weekday: "long" }).toLowerCase();
         const weekKey = `S${getWeekNumber(new Date(event.start))}`;
 
         try {
@@ -77,9 +89,17 @@ const Calendar: React.FC<CalendarProps> = ({ intervenant, startDate, endDate }: 
 
             const updatedAvailability = {
                 ...currentAvailability,
-                [weekKey]: (currentAvailability[weekKey] || []).filter(
-                    (slot: any) => !(slot.days === days && slot.from === from && slot.to === to)
-                ),
+                [weekKey]: (currentAvailability[weekKey] || []).flatMap((slot: any) => {
+                    if (slot.from === from && slot.to === to) {
+                        const daysArray = slot.days.split(', ').filter((day: string) => day !== dayToDelete);
+                        if (daysArray.length > 0) {
+                            return [{ ...slot, days: daysArray.join(', ') }];
+                        } else {
+                            return [];
+                        }
+                    }
+                    return [slot];
+                }),
             };
 
             // Supprimez la semaine si elle est vide
@@ -87,12 +107,11 @@ const Calendar: React.FC<CalendarProps> = ({ intervenant, startDate, endDate }: 
                 delete updatedAvailability[weekKey];
             }
 
-            await saveAvailability(intervenant.id, updatedAvailability); // Ré-enregistrement backend
-            // await deleteAvailability(intervenant.id, weekKey, days, from, to); // Appel backend
-            console.log("Événement supprimé côté backend");
+            const response = await saveAvailability(intervenant.id, updatedAvailability);
+            console.log(response.message);
             updateAvailabilityAndEvents(updatedAvailability);
         } catch (error) {
-            console.error("Erreur lors de la suppression de l'événement :", error);
+            console.error("Erreur lors de la suppression de la disponibilité :", error);
         }
     };
 
