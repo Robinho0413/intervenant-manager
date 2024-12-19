@@ -1,4 +1,5 @@
 import { Availability } from "./definitions/availability";
+import { v4 as uuid } from 'uuid';
 
 export const formatCurrency = (amount: number) => {
   return (amount / 100).toLocaleString('en-US', {
@@ -63,7 +64,7 @@ export function parseAvailabilityToEvents(
   startDate: Date,
   endDate: Date
 ) {
-  const events: { title: string; start: string; end: string }[] = [];
+  const events: { id: string; title: string; start: string; end: string }[] = [];
   const baseDate = new Date(startDate);
   const endPeriod = new Date(endDate);
 
@@ -116,6 +117,7 @@ export function parseAvailabilityToEvents(
             endDateTime.setHours(toHour, toMinute, 0, 0);
 
             events.push({
+              id: uuid(),
               title: `Disponibilité (${from} - ${to})`,
               start: startDateTime.toISOString(),
               end: endDateTime.toISOString(),

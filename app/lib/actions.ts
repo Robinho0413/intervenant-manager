@@ -225,13 +225,13 @@ export async function authenticate(
 export async function saveAvailability(id: string, updatedAvailability: any) {
   try {
     const client = await db.connect();
-    
+
     const query = `
       UPDATE public.intervenants
       SET availability = $1
       WHERE id = $2;
     `;
-    
+
     // Utiliser le format JSON pour insérer les nouvelles disponibilités
     await client.query(query, [JSON.stringify(updatedAvailability), id]);
 
@@ -242,3 +242,79 @@ export async function saveAvailability(id: string, updatedAvailability: any) {
     return { message: 'Erreur base de données : Échec de l\'enregistrement de la disponibilité.' };
   }
 }
+
+export async function deleteAvailability(
+  id: string,
+  weekKey: string,
+  days: string,
+  from: string,
+  to: string
+) {
+  try {
+    const client = await db.connect();
+
+    // Récupérer les disponibilités actuelles
+    const result = await client.query(
+      `SELECT availability FROM intervenants WHERE id = $1`,
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      throw new Error(`Intervenant avec l'ID ${id} introuvable.`);
+    }
+
+    // Gestion des données availability
+    const availabilityRaw = result.rows[0]?.availability || '{}';
+    console.log("Donnée brute availability :", availabilityRaw);
+
+    const availability =
+      typeof availabilityRaw === 'string' ? JSON.parse(availabilityRaw) : availabilityRaw;
+
+    if (typeof availability !== 'object') {
+      throw new Error('Données availability mal formatées.');
+    }
+
+    // Vérifier si la clé de semaine existe
+    if (!availability[weekKey]) {
+      throw new Error(`Semaine ${weekKey} introuvable dans les disponibilités.`);
+    }
+
+    // Filtrer les créneaux horaires spécifiques dans la semaine
+    const initialLength = availability[weekKey].length;
+    availability[weekKey] = availability[weekKey].filter(
+      (slot: any) =>
+        !(slot.days === days && slot.from === from && slot.to === to)
+    );
+
+    // Vérifier si un créneau a bien été supprimé
+    if (availability[weekKey].length === initialLength) {
+      throw new Error(
+        `Aucun créneau correspondant trouvé pour ${days}, de ${from} à ${to}, semaine ${weekKey}.`
+      );
+    }
+
+    // Si la semaine est vide après la suppression, la retirer (optionnel)
+    if (availability[weekKey].length === 0) {
+      delete availability[weekKey];
+    }
+
+    // Mettre à jour les disponibilités dans la base de données
+    await client.query(
+      `UPDATE intervenants SET availability = $1 WHERE id = $2`,
+      [JSON.stringify(availability), id]
+    );
+
+    client.release();
+
+    return { message: 'Disponibilité supprimée avec succès.' };
+  } catch (error) {
+    console.error("Erreur dans la base de données :", error);
+    throw new Error(
+      error.message ||
+        'Erreur base de données : Impossible de supprimer la disponibilité.'
+    );
+  }
+}
+
+
+
