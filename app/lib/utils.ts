@@ -79,7 +79,7 @@ export function parseAvailabilityToEvents(
   };
 
   const defaultSchedules = availability.default || [];
-  let currentWeekStart = new Date(baseDate);
+  const currentWeekStart = new Date(baseDate);
 
   while (currentWeekStart <= endPeriod) {
     const weekNumber = getWeekNumber(currentWeekStart);

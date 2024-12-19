@@ -1,20 +1,22 @@
 import Pagination from '@/app/ui/interveners/pagination';
 import Table from '@/app/ui/interveners/table';
-import { fetchIntervenantsPages, fetchIntervenants } from '@/app/lib/data';
+import { fetchIntervenantsPages } from '@/app/lib/data';
 import { CreateIntervenant, RegenerateAllKeysButton } from '@/app/ui/interveners/buttons';
 
 export default async function IntervenerPage({
   searchParams,
 }: {
-  searchParams?: {
+  searchParams?: Promise<{
     query?: string;
     page?: string;
-  };
+  }>;
 }) {
-  const query = searchParams?.query || '';
-  const currentPage = Number(searchParams?.page) || 1;
+  const resolvedSearchParams = await searchParams;
 
-  const totalPages = await fetchIntervenantsPages(query);
+  const query = resolvedSearchParams?.query || '';
+  const currentPage = Number(resolvedSearchParams?.page) || 1;
+
+  const totalPages = await fetchIntervenantsPages();
 
 
   return (
@@ -23,7 +25,6 @@ export default async function IntervenerPage({
         <h1 className="text-2xl">Gestion des intervenants</h1>
       </div>
       <div className="mt-4 flex items-center justify-between gap-2 md:mt-8">
-        {/* <Search placeholder="Rechercher un intervenant..." /> */}
         <CreateIntervenant />
         <RegenerateAllKeysButton />
       </div>

@@ -11,7 +11,7 @@ export default function NotFound() {
         href="/dashboard/interveners"
         className="mt-4 rounded-md bg-teal-500 px-4 py-2 text-sm text-white transition-colors hover:bg-teal-400"
       >
-        Retourner à l'accueil
+        Accueil
       </Link>
     </main>
   );

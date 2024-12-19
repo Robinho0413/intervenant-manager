@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useRef } from "react";
+import React, { useState } from "react";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
@@ -11,7 +11,7 @@ import {
     parseAvailabilityToEvents,
     getWeekNumber,
 } from "@/app/lib/utils";
-import { SelectInfo, Availability, CalendarProps } from "@/app/lib/definitions/availability";
+import { SelectInfo, Availability, CalendarProps, UpdatedAvailability, Slot, EventInfo } from "@/app/lib/definitions/availability";
 import { TrashIcon } from '@heroicons/react/24/outline';
 
 
@@ -20,7 +20,7 @@ const Calendar: React.FC<CalendarProps> = ({ intervenant, startDate, endDate }: 
         parseAvailabilityToEvents(intervenant.availability, startDate, endDate)
     );
 
-    const updateAvailabilityAndEvents = (updatedAvailability: any) => {
+    const updateAvailabilityAndEvents = (updatedAvailability: UpdatedAvailability) => {
         intervenant.availability = updatedAvailability; // Mettez à jour les disponibilités de l'intervenant
         setEvents(parseAvailabilityToEvents(updatedAvailability, startDate, endDate)); // Recréez les événements
     };
@@ -96,7 +96,7 @@ const Calendar: React.FC<CalendarProps> = ({ intervenant, startDate, endDate }: 
 
         const updatedAvailability = {
             ...currentAvailability,
-            [weekKey]: (currentAvailability[weekKey] || []).flatMap((slot: any) => {
+            [weekKey]: (currentAvailability[weekKey] || []).flatMap((slot: Slot) => {
                 // Si les plages horaires correspondent
                 if (slot.from === from && slot.to === to) {
                     // Retirer le jour supprimé
@@ -130,7 +130,9 @@ const Calendar: React.FC<CalendarProps> = ({ intervenant, startDate, endDate }: 
 };
 
 
-    const renderEventContent = (eventInfo: any) => {
+
+
+    const renderEventContent = (eventInfo: EventInfo) => {
         return (
             <div className="flex items-center justify-between">
                 <span>{eventInfo.event.title}</span>

@@ -5,11 +5,12 @@ services:
       dockerfile: Dockerfile
     ports:
       - "3000:3000"
-    volumes:
-      - .:/app # Monte le dossier actuel dans le conteneur
-      - /app/node_modules # Évite les conflits avec node_modules de l'hôte
     environment:
-      NODE_ENV: development
+      NODE_ENV: production
+      NEXTAUTH_URL: http://localhost:3000 # A remplacer par l'URL public
+      AUTH_SECRET: bMBmR1WW1FT2d2QFdi7bGhBxk5AbqBZQRcoUcuyicd8
+    profiles:
+      - production
 
   db:
     image: postgres:17
@@ -29,6 +30,21 @@ services:
       PGADMIN_DEFAULT_PASSWORD: admin
     depends_on:
       - db
+
+  app-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/app # Monte le dossier actuel dans le conteneur
+      - /app/node_modules # Évite les conflits avec node_modules de l'hôte
+    environment:
+      NODE_ENV: development
+    command: npm run dev
+    profiles:
+      - development
 
 volumes:
   db-data:

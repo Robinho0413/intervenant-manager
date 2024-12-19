@@ -25,7 +25,7 @@ export async function fetchIntervenants(): Promise<Intervenant[]> {
   }
 }
 
-export async function fetchIntervenantsPages(query: string): Promise<number> {
+export async function fetchIntervenantsPages(): Promise<number> {
   try {
     const client = await db.connect();
     const result = await client.query('SELECT COUNT(*) FROM "intervenants"');

@@ -1,3 +1,5 @@
+import { Availability } from "./availability";
+
 export type Intervenant = {
     id: string;
     email: string;
@@ -6,7 +8,7 @@ export type Intervenant = {
     key: string;
     creationdate: string;
     enddate: string;
-    availability: JSON;
+    availability: Record<string, Availability[]>;
     isKeyExpired: boolean;
 };
 
@@ -17,3 +19,9 @@ export type IntervenantForm = {
     lastname: string;
     enddate: string;
 };
+
+export interface PageProps {
+    params: Promise<{
+        id: string;
+    }>;
+}

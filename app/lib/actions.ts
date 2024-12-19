@@ -4,10 +4,10 @@ import { db } from './db';
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
-import { inter } from '../ui/fonts';
 import { v4 as uuidv4 } from 'uuid';
 import { signIn } from '@/auth';
 import { AuthError } from 'next-auth';
+import { UpdatedAvailability } from './definitions/availability';
 
 const FormSchema = z.object({
   id: z.string(),
@@ -31,31 +31,30 @@ export type State = {
     lastname?: string[];
     enddate?: string[];
   };
-  message?: string | null;
+  message: string; // Ensure it's a string
 };
 
 const CreateIntervenant = FormSchema.omit({ id: true });
 
-export async function createIntervenant(prevState: State, formData: FormData) {
-  // Validate form using Zod
+export async function createIntervenant(
+  state: State,
+  formData: FormData
+): Promise<State> {
   const validatedFields = CreateIntervenant.safeParse({
     email: formData.get('email'),
     firstname: formData.get('firstname'),
     lastname: formData.get('lastname'),
   });
 
-  // If form validation fails, return errors early. Otherwise, continue.
   if (!validatedFields.success) {
     return {
       errors: validatedFields.error.flatten().fieldErrors,
-      message: 'Champs manquants Création de l\'intervenant échouée.',
+      message: 'Champs manquants : Création de l\'intervenant échouée.',
     };
   }
 
-  // Prepare data for insertion into the database
   const { email, firstname, lastname } = validatedFields.data;
 
-  // Vérifier si l'email existe déjà dans la base de données
   try {
     const client = await db.connect();
     const emailCheckResult = await client.query(
@@ -67,22 +66,20 @@ export async function createIntervenant(prevState: State, formData: FormData) {
     const emailExists = parseInt(emailCheckResult.rows[0].count, 10) > 0;
 
     if (emailExists) {
-      // Retourner un message d'erreur si l'email existe déjà
       return {
         errors: { email: ['Cet email est déjà utilisé.'] },
         message: 'Email déjà utilisé.',
       };
     }
 
-    // Si l'email n'existe pas, continuer avec l'insertion dans la base de données
     const key = uuidv4();
     const creationdate = new Date().toISOString();
     const enddate = new Date();
     enddate.setMonth(enddate.getMonth() + 2);
 
     const clientInsert = await db.connect();
-    await clientInsert.query(`
-      INSERT INTO intervenants(
+    await clientInsert.query(
+      `INSERT INTO intervenants(
         email,
         firstname,
         lastname,
@@ -90,19 +87,28 @@ export async function createIntervenant(prevState: State, formData: FormData) {
         creationdate,
         enddate,
         availability
-      )
-      VALUES ($1, $2, $3, $4, $5, $6, '{}')`, [email, firstname, lastname, key, creationdate, enddate.toISOString()]);
+      ) VALUES ($1, $2, $3, $4, $5, $6, '{}')`,
+      [email, firstname, lastname, key, creationdate, enddate.toISOString()]
+    );
     clientInsert.release();
 
     revalidatePath('/dashboard/interveners');
     redirect('/dashboard/interveners');
-
   } catch (error) {
-    return {
-      message: 'Erreur base de données : Échec de la création de l\'intervenant : ' + error,
-    };
+    if (error instanceof Error) {
+      return {
+        message: 'Erreur base de données : ' + error.message,
+        errors: {},
+      };
+    } else {
+      return {
+        message: 'Erreur inconnue',
+        errors: {},
+      };
+    }
   }
 }
+
 
 const UpdateIntervenant = EditFormSchema.omit({ id: true });
 
@@ -129,7 +135,7 @@ export async function updateIntervenant(
 
   try {
     const client = await db.connect();
-    const result = await client.query(`
+    await client.query(`
       UPDATE intervenants
       SET email = $1, firstname = $2, lastname = $3, enddate = $4
       WHERE id = $5
@@ -146,19 +152,19 @@ export async function updateIntervenant(
 }
 
 
-export async function deleteIntervenant(id: string) {
+export async function deleteIntervenant(id: string): Promise<void> {
   try {
     const client = await db.connect();
-    const result = await client.query(`DELETE FROM intervenants WHERE id = ${id}`)
+    await client.query(`DELETE FROM intervenants WHERE id = ${id}`);
     client.release();
     revalidatePath('/dashboard/interveners');
-    return { message: 'Deleted intervenants.' };
   } catch (error) {
-    return { message: 'Database Error: Failed to Delete intervenants.' };
+    console.error('Database Error: Failed to Delete intervenants:', error);
+    throw new Error('Database Error: Failed to Delete intervenants');
   }
 }
 
-export async function regenerateKeyIntervenant(id: string) {
+export async function regenerateKeyIntervenant(id: string): Promise<void> {
   try {
     const newKey = uuidv4();
     const creationdate = new Date().toISOString();
@@ -172,9 +178,9 @@ export async function regenerateKeyIntervenant(id: string) {
     );
     client.release();
     revalidatePath('/dashboard/interveners');
-    return { message: 'Clé régénérée avec succès.' };
   } catch (error) {
-    return { message: 'Erreur base de données : Échec de la régénération de la clé : ' + error };
+    console.error('Erreur base de données : Échec de la régénération de la clé :', error);
+    throw new Error('Erreur base de données : Échec de la régénération de la clé');
   }
 }
 
@@ -222,7 +228,7 @@ export async function authenticate(
   }
 }
 
-export async function saveAvailability(id: string, updatedAvailability: any) {
+export async function saveAvailability(id: string, updatedAvailability: UpdatedAvailability) {
   try {
     const client = await db.connect();
 

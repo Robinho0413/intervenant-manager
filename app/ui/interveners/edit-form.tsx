@@ -1,12 +1,6 @@
 'use client';
 
 import { IntervenantForm } from '@/app/lib/definitions/intervenant';
-import {
-  CheckIcon,
-  ClockIcon,
-  CurrencyDollarIcon,
-  UserCircleIcon,
-} from '@heroicons/react/24/outline';
 import Link from 'next/link';
 import { Button } from '@/app/ui/button';
 import { updateIntervenant, State } from '@/app/lib/actions';
@@ -18,7 +12,7 @@ export default function EditIntervenantForm({
 }: {
   intervenant: IntervenantForm;
 }) {
-  const initialState: State = { message: null, errors: {} };
+  const initialState: State = { message: '', errors: {} };
   const updateIntervenantWithId = updateIntervenant.bind(null, intervenant.id);
   const [state, formAction] = useActionState(updateIntervenantWithId, initialState);
 
@@ -110,7 +104,7 @@ export default function EditIntervenantForm({
 
           <div className="mb-4">
             <label htmlFor="enddate" className="mb-2 block text-sm font-medium">
-              Date d'expiration de validité
+              Date expiration de validité
             </label>
             <div className="relative mt-2 rounded-md">
               <div className="relative">
@@ -144,7 +138,7 @@ export default function EditIntervenantForm({
         >
           Cancel
         </Link>
-        <Button type="submit">Modifier l'intervenant</Button>
+        <Button type="submit">Modifier</Button>
       </div>
     </form>
   );

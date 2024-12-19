@@ -2,9 +2,10 @@ import React from "react";
 import Calendar from "@/app/ui/calendar";
 import { fetchIntervenantByKey } from "@/app/lib/data";
 import { notFound } from "next/navigation";
+import { PageProps } from "@/app/lib/definitions/availability";
 
-export default async function Page({ params }: { params: { key: string } }) {
-  const { key } = params;
+export default async function Page({ params }: PageProps) {
+  const { key } = await params;
 
   if (!key) {
     notFound();
@@ -19,7 +20,7 @@ export default async function Page({ params }: { params: { key: string } }) {
   if (intervenantData && intervenantData.isKeyExpired) {
     return (
       <div>
-        <h1>La clé de l'intervenant est expirée.</h1>
+        <h1>Clé expirée.</h1>
       </div>
     );
   }

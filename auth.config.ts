@@ -1,6 +1,7 @@
 import type { NextAuthConfig } from 'next-auth';
  
 export const authConfig = {
+  secret: process.env.AUTH_SECRET, // Utilisation de la clé
   pages: {
     signIn: '/login',
   },
@@ -18,4 +19,5 @@ export const authConfig = {
     },
   },
   providers: [], // Add providers with an empty array for now
+  trustHost: true,
 } satisfies NextAuthConfig;

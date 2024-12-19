@@ -29,7 +29,9 @@ export function UpdateIntervenant({ id }: { id: string }) {
 }
 
 export function DeleteIntervenant({ id }: { id: string }) {
-  const deleteIntervenantWithId = deleteIntervenant.bind(null, id);
+  const deleteIntervenantWithId = async () => {
+    await deleteIntervenant(id);
+  };
 
   return (
     <form action={deleteIntervenantWithId}>

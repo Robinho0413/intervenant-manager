@@ -2,12 +2,11 @@ import Form from '@/app/ui/interveners/edit-form';
 import Breadcrumbs from '@/app/ui/interveners/breadcrumbs';
 import { fetchIntervenantById } from '@/app/lib/data';
 import { notFound } from 'next/navigation';
+import { PageProps } from '@/app/lib/definitions/intervenant';
 
-export default async function Page({ params }: { params: { id: string } }) {
-  const id = params.id;
-  const [intervenant] = await Promise.all([
-    fetchIntervenantById(id),
-  ]);
+export default async function Page({ params }: PageProps) {
+  const { id } = await params;
+  const intervenant = await fetchIntervenantById(id);
 
   if (!intervenant) {
     notFound();

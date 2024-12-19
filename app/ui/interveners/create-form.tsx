@@ -1,21 +1,14 @@
 'use client';
 
 import Link from 'next/link';
-import {
-  CheckIcon,
-  ClockIcon,
-  CurrencyDollarIcon,
-  UserCircleIcon,
-} from '@heroicons/react/24/outline';
 import { Button } from '@/app/ui/button';
 import { createIntervenant, State } from '@/app/lib/actions';
-import { useRouter } from 'next/router';
 
 import { useActionState } from 'react';
 
 export default function Form() {
   const initialState: State = { message: '', errors: {} };
-  const [state, formAction] = useActionState(createIntervenant, initialState);
+  const [state, formAction] = useActionState(createIntervenant, initialState);  
 
   return (
     <form action={formAction}>

@@ -28,3 +28,28 @@ export interface CalendarProps {
     startDate: Date;
     endDate: Date;
 }
+
+export interface UpdatedAvailability {
+    [key: string]: Availability[];
+}
+
+export interface Slot {
+    days: string;
+    from: string;
+    to: string;
+}
+
+export interface EventInfo {
+    event: {
+        id: string;
+        title: string;
+        start: string;
+        end: string;
+    };
+}
+
+export interface PageProps {
+    params: Promise<{
+        key: string;
+    }>;
+}
