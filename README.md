@@ -1,5 +1,9 @@
 # Intervenant Manager
 
-## Progression
+## Hebergement
 
-Itération 12 (13/12)
+Production : 
+docker-compose --profile production up --build
+
+Dev :
+docker-compose --profile development up
