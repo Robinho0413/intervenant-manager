@@ -225,13 +225,13 @@ export async function authenticate(
 export async function saveAvailability(id: string, updatedAvailability: any) {
   try {
     const client = await db.connect();
-    
+
     const query = `
       UPDATE public.intervenants
       SET availability = $1
       WHERE id = $2;
     `;
-    
+
     // Utiliser le format JSON pour insérer les nouvelles disponibilités
     await client.query(query, [JSON.stringify(updatedAvailability), id]);
 
