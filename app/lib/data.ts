@@ -114,7 +114,17 @@ export async function fetchIntervenantByKey(key: string): Promise<Intervenant | 
       return null;
     }
 
-    return result.rows[0] as Intervenant;
+    const intervenant = result.rows[0] as Intervenant;
+
+    // Vérifier si la clé est expirée
+    const currentDate = new Date();
+    const endDate = new Date(intervenant.enddate);
+    const isKeyExpired = currentDate > endDate;
+
+    return {
+      ...intervenant,
+      isKeyExpired,
+    };
   } catch (error) {
     throw new Error(`Failed to fetch intervenant by key: ${error}`);
   }

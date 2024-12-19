@@ -7,6 +7,7 @@ export type Intervenant = {
     creationdate: string;
     enddate: string;
     availability: JSON;
+    isKeyExpired: boolean;
 };
 
 export type IntervenantForm = {

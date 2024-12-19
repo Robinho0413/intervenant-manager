@@ -16,6 +16,14 @@ export default async function Page({ params }: { params: { key: string } }) {
     notFound();
   }
 
+  if (intervenantData && intervenantData.isKeyExpired) {
+    return (
+      <div>
+        <h1>La clé de l'intervenant est expirée.</h1>
+      </div>
+    );
+  }
+
   const startDate = new Date(new Date().getFullYear(), 8, 2); // 2 Septembre
   const endDate = new Date(new Date().getFullYear() + 1, 5, 30); // 30 Juin
 
