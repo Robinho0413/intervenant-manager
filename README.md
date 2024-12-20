@@ -2,4 +2,4 @@
 
 ## Progression
 
-Itération 12 (13/12)
+Itération 14 (20/12)
