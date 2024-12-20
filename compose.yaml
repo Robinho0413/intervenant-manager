@@ -7,7 +7,7 @@ services:
       - "3000:3000"
     environment:
       NODE_ENV: production
-      NEXTAUTH_URL: http://localhost:3000 # A remplacer par l'URL public
+      NEXTAUTH_URL: http://193.168.145.227:3000
       AUTH_SECRET: bMBmR1WW1FT2d2QFdi7bGhBxk5AbqBZQRcoUcuyicd8
     profiles:
       - production
