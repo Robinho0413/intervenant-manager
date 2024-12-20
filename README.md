@@ -3,9 +3,8 @@
 ## Liens
 
 ## Liens
-- Application : http://193.168.145.227
-- PgAdmin : http://193.168.145.227
-- PgAdmin : [http://localhost:8080](http://localhost:8080)
+- Application : [http://193.168.145.227](http://193.168.145.227)
+- PgAdmin : [http://193.168.145.227:8080](http://193.168.145.227:8080)
 
 
 ## Lancer l'environnement
