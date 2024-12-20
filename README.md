@@ -1,8 +1,6 @@
 # Intervenant Manager
 
 ## Liens
-
-## Liens
 - Application : [http://193.168.145.227](http://193.168.145.227)
 - PgAdmin : [http://193.168.145.227:8080](http://193.168.145.227:8080)
 
